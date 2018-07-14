@@ -1,11 +1,12 @@
 {
-  "name": "skill-sample-nodejs-hello-world",
+  "name": "alexa-skill-shopping-assistant",
   "version": "1.0.0",
-  "description": "Hello world sample skill",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
+  "author": "Tom Bell",
+  "private": true,
   "dependencies": {
     "alexa-sdk": "^1.0.0"
+  },
+  "engines": {
+    "node": "^8.10.0"
   }
 }
