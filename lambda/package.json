@@ -2,7 +2,10 @@
   "name": "alexa-skill-shopping-assistant",
   "version": "1.0.0",
   "author": "Tom Bell",
+  "license": "MIT",
   "private": true,
+  "main": "index.js",
+  "scripts": {},
   "dependencies": {
     "alexa-sdk": "^1.0.0"
   },

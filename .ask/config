@@ -1,0 +1,40 @@
+{
+  "deploy_settings": {
+    "default": {
+      "skill_id": "amzn1.ask.skill.463a4d5e-551b-4f75-8738-ad87f48a3be9",
+      "was_cloned": false,
+      "resources": {
+        "manifest": {
+          "eTag": "9e02c36c30d84ea4f6c28a99793d3c4d"
+        },
+        "lambda": [
+          {
+            "arn": "arn:aws:lambda:eu-west-1:723719293598:function:ShoppingAssistant",
+            "awsRegion": "eu-west-1",
+            "functionName": "arn:aws:lambda:eu-west-1:723719293598:function:ShoppingAssistant",
+            "alexaUsage": [
+              "custom/default"
+            ],
+            "revisionId": "613ffb14-e1aa-488e-8483-a2dd81ef6a73"
+          }
+        ],
+        "interactionModel": {
+          "en-GB": {
+            "eTag": "192fddb3ccf9fc965410013db8aba84b"
+          }
+        }
+      },
+      "merge": {
+        "manifest": {
+          "apis": {
+            "custom": {
+              "endpoint": {
+                "uri": "arn:aws:lambda:eu-west-1:723719293598:function:ShoppingAssistant"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
