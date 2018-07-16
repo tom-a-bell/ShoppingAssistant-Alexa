@@ -5,7 +5,9 @@
   "license": "MIT",
   "private": true,
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "deploy": "./scripts/deploy.sh"
+  },
   "dependencies": {
     "ask-sdk": "^2.0.0",
     "ask-sdk-core": "^2.0.0",
