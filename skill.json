@@ -3,9 +3,21 @@
     "publishingInformation": {
       "locales": {
         "en-GB": {
-          "name": "Shopping Assistant"
+          "name": "Shopping Assistant",
+          "summary": "Allow your Alexa shopping list to be synced to the Shopping Assistant app.",
+          "description": "Allow your Alexa shopping list to be synced to the Shopping Assistant app.",
+          "examplePhrases": [
+            "Alexa, launch Shopping Assistant."
+          ],
+          "keywords": [],
+          "smallIconUri": "https://s3.amazonaws.com/CAPS-SSE/echo_developer/8377/6a95b8c374d84a34a088cffedb00423e/APP_ICON?versionId=hbfWOkX9rragffNbM39vC2XX3eXSJ0P3&AWSAccessKeyId=AKIAIEYXX6DHY7O4XWMA&Expires=1531704393&Signature=BsTzD312AxiXVlSIpliA2LiS7W8%3D",
+          "largeIconUri": "https://s3.amazonaws.com/CAPS-SSE/echo_developer/2ca6/37884613c78649e797449c38aae21333/APP_ICON_LARGE?versionId=4TcoDcZ1alLJ0L.WUDiI1QOfc0zUL2s2&AWSAccessKeyId=AKIAIEYXX6DHY7O4XWMA&Expires=1531704393&Signature=10U7x328sr6wgbJZFe1q9gWNKck%3D"
         }
-      }
+      },
+      "isAvailableWorldwide": true,
+      "testingInstructions": "List read/write permissions are requests by the skill, so granting/revoking these should be tested.",
+      "category": "TO_DO_LISTS_AND_NOTES",
+      "distributionCountries": []
     },
     "apis": {
       "custom": {
@@ -24,6 +36,13 @@
         "name": "alexa::household:lists:write"
       }
     ],
+    "privacyAndCompliance": {
+      "containsAds": false,
+      "allowsPurchases": false,
+      "isChildDirected": false,
+      "isExportCompliant": true,
+      "usesPersonalInfo": false
+    },
     "events": {
       "endpoint": {
         "uri": "arn:aws:lambda:eu-west-1:723719293598:function:ShoppingAssistant"
