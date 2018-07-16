@@ -1,9 +1,14 @@
 const Alexa = require('ask-sdk');
 
-const welcomeOutput = 'Welcome to ...';
+const welcomeOutput = 'Welcome to Shopping Assistant';
 const welcomeReprompt = 'What can I help you with?';
+const linkAccountOutput = 'Please use the Alexa App to authenticate on Amazon to start using this skill';
+const permissionsOutput = 'Please enable List permissions in the Alexa App.';
 const helpOutput = 'You can demonstrate ... by ...  Try saying ...';
 const helpReprompt = 'Try saying ...';
+
+// Permissions requested by the skill
+const permissions = ['read::alexa:household:list'];
 
 // Status of list, either active or completed
 const STATUS = {
@@ -62,7 +67,14 @@ const ItemEventHandler = {
         const listItemIds = handlerInput.requestEnvelope.request.body.listItemIds;
         const status = STATUS.ACTIVE;
         const listServiceClient = handlerInput.serviceClientFactory.getListManagementServiceClient();
-        console.log('item created');
+        console.log('Item was created, updated or deleted');
+
+        const consentToken = handlerInput.requestEnvelope.context.System.user.permissions
+                          && handlerInput.requestEnvelope.context.System.user.permissions.consentToken;
+        if (!consentToken) {
+            console.log('Error: consentToken not specified');
+        }
+
         const list = await listServiceClient.getList(listId, status);
         if (handlerInput.requestEnvelope.request.type === 'AlexaHouseholdListEvent.ItemsDeleted') {
             console.log(`${listItemIds} was deleted from list ${list.name}`);
@@ -123,6 +135,25 @@ const LaunchRequestHandler = {
     },
     handle(handlerInput) {
         const responseBuilder = handlerInput.responseBuilder;
+
+        const accessToken = handlerInput.requestEnvelope.session.user
+                         && handlerInput.requestEnvelope.session.user.accessToken;
+        if (!accessToken) {
+            return responseBuilder
+                .speak(linkAccountOutput)
+                .withLinkAccountCard()
+                .getResponse();
+        }
+
+        const consentToken = handlerInput.requestEnvelope.context.System.user.permissions
+                          && handlerInput.requestEnvelope.context.System.user.permissions.consentToken;
+        if (!consentToken) {
+            return responseBuilder
+                .speak(permissionsOutput)
+                .withAskForPermissionsConsentCard(permissions)
+                .getResponse();
+        }
+
         return responseBuilder
             .speak(welcomeOutput)
             .reprompt(welcomeReprompt)
