@@ -41,7 +41,12 @@
       "allowsPurchases": false,
       "isChildDirected": false,
       "isExportCompliant": true,
-      "usesPersonalInfo": false
+      "usesPersonalInfo": false,
+      "locales": {
+        "en-GB": {
+          "privacyPolicyUrl": "https://www.amazon.co.uk/gp/help/customer/display.html?nodeId=502584"
+        }
+      }
     },
     "events": {
       "endpoint": {
