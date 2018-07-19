@@ -1,4 +1,6 @@
 const Alexa = require('ask-sdk');
+const AWS = require('aws-sdk');
+require('amazon-cognito-js');
 
 const welcomeOutput = 'Welcome to Shopping Assistant';
 const welcomeReprompt = 'What can I help you with?';
@@ -65,19 +67,104 @@ const ItemEventHandler = {
     async handle(handlerInput) {
         const listId = handlerInput.requestEnvelope.request.body.listId;
         const listItemIds = handlerInput.requestEnvelope.request.body.listItemIds;
-        const status = STATUS.ACTIVE;
-        const listServiceClient = handlerInput.serviceClientFactory.getListManagementServiceClient();
         console.log('Item was created, updated or deleted');
 
         const consentToken = handlerInput.requestEnvelope.context.System.user.permissions
                           && handlerInput.requestEnvelope.context.System.user.permissions.consentToken;
         if (!consentToken) {
-            console.log('Error: consentToken not specified');
+            console.error('Error: consentToken not specified');
         }
 
-        const list = await listServiceClient.getList(listId, status);
+        const accessToken = handlerInput.requestEnvelope.context.System.user.accessToken;
+        if (!accessToken) {
+            console.error('Error: accessToken for linked account not specified');
+        }
+
+        // Fetch the full list of active items
+        const listServiceClient = handlerInput.serviceClientFactory.getListManagementServiceClient();
+        const list = await listServiceClient.getList(listId, STATUS.ACTIVE);
+
+        // Initialize the Amazon Cognito credentials provider
+        // const identityProvider = `cognito-idp.${process.env.COGNITO_AWS_REGION}.amazonaws.com/${process.env.COGNITO_USER_POOL_ID}`;
+        const identityProvider = 'www.amazon.com';
+        AWS.config.region = process.env.COGNITO_AWS_REGION;
+        AWS.config.credentials = new AWS.CognitoIdentityCredentials({
+            IdentityPoolId: process.env.COGNITO_IDENTITY_POOL_ID,
+            Logins: { [identityProvider]: accessToken }
+        });
+
+        try {
+            await await AWS.config.credentials.getPromise();
+
+            const syncManager = new AWS.CognitoSyncManager({ DataStore: AWS.CognitoSyncManager.StoreInMemory });
+            syncManager.openOrCreateDataset('ShoppingList', function(error, dataset) {
+                if (error) {
+                    console.error('Failed to open or create dataset');
+                    console.error(error);
+                } else {
+                    list.items.forEach(function(item) {
+                        const itemId = item.id;
+                        const itemDetails = JSON.stringify({
+                            "value": item.value,
+                            "status": item.status,
+                            "version": item.version,
+                            "createdTime": item.createdTime,
+                            "updatedTime": item.updatedTime,
+                        });
+
+                        dataset.put(itemId, itemDetails, function (error, record) {
+                            if (error) {
+                                console.error(`Failed to save item to dataset: ${record}`);
+                                console.error(error);
+                            } else {
+                                console.log(`Saved item to dataset: ${record}`);
+                            }
+                        });
+                    });
+
+                    // Synchronize the local and remote datasets
+                    dataset.synchronize({
+                        onSuccess: function(dataset, newRecords) {
+                            console.log(`Successfully synchronized ${newRecords.length} new records.`);
+                        },
+
+                        onFailure: function(error) {
+                            console.error('Failed to synchronize dataset to remote store!');
+                            console.error(error);
+                        },
+
+                        onConflict: function(dataset, conflicts, callback) {
+                            console.error('Conflict encountered while syncing to remote store!');
+
+                            // Abandon the synchronization process.
+                           return callback(false);
+                        },
+
+                        onDatasetDeleted: function(dataset, datasetName, callback) {
+                            console.log(`Dataset deleted in remote store: ${datasetName}`);
+
+                            // Return true to delete the local copy of the dataset.
+                            // Return false to handle deleted datasets outside the synchronization callback.
+                            return callback(true);
+                        },
+
+                        onDatasetsMerged: function(dataset, datasetNames, callback) {
+                            console.log(`Datasets merged in remote store: ${datasetNames}`);
+
+                            // Return true to continue the synchronization process.
+                            // Return false to handle dataset merges outside the synchronization callback.
+                            return callback(false);
+                        }
+                    });
+                }
+            });
+        } catch (error) {
+            console.error('Failed to log in with Cognito identity credentials!');
+            console.error(error);
+        }
+
         if (handlerInput.requestEnvelope.request.type === 'AlexaHouseholdListEvent.ItemsDeleted') {
-            console.log(`${listItemIds} was deleted from list ${list.name}`);
+            console.log(`"${listItemIds}" was deleted from your ${list.name}`);
         } else {
             for (let i = 0, len = listItemIds.length; i < len; i += 1) {
                 // using await within the loop to avoid throttling
@@ -85,13 +172,13 @@ const ItemEventHandler = {
                 const itemName = listItem.value;
                 switch (handlerInput.requestEnvelope.request.type) {
                     case 'AlexaHouseholdListEvent.ItemsCreated':
-                        console.log(`${itemName} was added to list ${list.name}`);
+                        console.log(`"${itemName}" was added to your ${list.name}`);
                         break;
                     case 'AlexaHouseholdListEvent.ItemsUpdated':
-                        console.log(`${itemName} was updated on list ${list.name}`);
+                        console.log(`"${itemName}" was updated on your ${list.name}`);
                         break;
                     default:
-                        console.log(`unexpected request type ${handlerInput.requestEnvelope.request.type}`);
+                        console.log(`Unexpected request type ${handlerInput.requestEnvelope.request.type}`);
                 }
             }
         }

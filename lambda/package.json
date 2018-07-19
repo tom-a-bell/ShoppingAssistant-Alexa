@@ -9,9 +9,11 @@
     "deploy": "./scripts/deploy.sh"
   },
   "dependencies": {
+    "amazon-cognito-js": "^1.1.0",
     "ask-sdk": "^2.0.0",
     "ask-sdk-core": "^2.0.0",
-    "ask-sdk-model": "^1.0.0"
+    "ask-sdk-model": "^1.0.0",
+    "aws-sdk": "^2.275.0"
   },
   "engines": {
     "node": "^8.10.0"
