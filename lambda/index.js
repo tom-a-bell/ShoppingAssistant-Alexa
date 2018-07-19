@@ -215,6 +215,21 @@ const ListEventHandler = {
     },
 };
 
+const IntentRequestHandler = {
+    canHandle(handlerInput) {
+        const request = handlerInput.requestEnvelope.request;
+        return request.type === 'IntentRequest'
+            && request.intent.name === 'HelloWorldIntent';
+    },
+    handle(handlerInput) {
+        const responseBuilder = handlerInput.responseBuilder;
+        return responseBuilder
+            .speak('Hi there!')
+            .withSimpleCard('Shopping Assistant', 'Hi there!')
+            .getResponse();
+    },
+};
+
 const LaunchRequestHandler = {
     canHandle(handlerInput) {
         const request = handlerInput.requestEnvelope.request;
@@ -249,7 +264,7 @@ const LaunchRequestHandler = {
 };
 
 const UnhandledHandler = {
-    canHandle(handlerInput) {
+    canHandle() {
         return true;
     },
     handle(handlerInput) {
@@ -325,6 +340,7 @@ exports.handler = skillBuilder
         AmazonCancelStopHandler,
         AmazonHelpHandler,
         LaunchRequestHandler,
+        IntentRequestHandler,
         SkillEventHandler,
         ItemEventHandler,
         ListEventHandler,
