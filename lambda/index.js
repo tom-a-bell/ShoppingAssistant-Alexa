@@ -216,6 +216,40 @@ const ListEventHandler = {
     },
 };
 
+const MessageRequestHandler = {
+    canHandle(handlerInput) {
+        const request = handlerInput.requestEnvelope.request;
+        return request.type === 'Messaging.MessageReceived';
+    },
+    async handle(handlerInput) {
+        const message = handlerInput.requestEnvelope.request.message;
+
+        const listId = 'YW16bjEuYWNjb3VudC5BSExKRldaNzRKMzQ0QTZPUFBHUUlTQUxIVEJRLVNIT1BQSU5HX0lURU0=';
+        const listServiceClient = handlerInput.serviceClientFactory.getListManagementServiceClient();
+
+        for (const [itemId, update] of Object.entries(message)) {
+            if (update.change) {
+                switch (update.change) {
+                    case 'create':
+                        console.log(`Creating item with properties:`, update.value);
+                        await listServiceClient.createListItem(listId, JSON.parse(update.value));
+                        continue;
+                    case 'update':
+                        console.log(`Updating item with properties:`, update.value);
+                        await listServiceClient.updateListItem(listId, itemId, JSON.parse(update.value));
+                        continue;
+                    case 'delete':
+                        console.log(`Deleting item with properties:`, update.value);
+                        await listServiceClient.deleteListItem(listId, itemId);
+                        continue;
+                    default:
+                      console.error('Unrecognised change request:', update.change);
+                }
+            }
+        }
+    },
+};
+
 const IntentRequestHandler = {
     canHandle(handlerInput) {
         const request = handlerInput.requestEnvelope.request;
@@ -345,6 +379,7 @@ exports.handler = skillBuilder
         SkillEventHandler,
         ItemEventHandler,
         ListEventHandler,
+        MessageRequestHandler,
         SessionEndedHandler,
         UnhandledHandler,
     )
