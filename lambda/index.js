@@ -358,7 +358,7 @@ const ErrorHandler = {
         const request = handlerInput.requestEnvelope.request;
 
         console.log(`Original Request was: ${JSON.stringify(request, null, 2)}`);
-        console.log(`Error handled: ${error}`);
+        console.log(`Error handled: ${error}`, JSON.stringify(error, null, 2));
 
         return handlerInput.responseBuilder
             .speak('Sorry, I had trouble doing what you asked.  Please ask for it again.')
