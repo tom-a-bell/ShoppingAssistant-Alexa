@@ -105,6 +105,7 @@ const ItemEventHandler = {
                     list.items.forEach(function(item) {
                         const itemId = item.id;
                         const itemDetails = JSON.stringify({
+                            "id": item.id,
                             "value": item.value,
                             "status": item.status,
                             "version": item.version,
