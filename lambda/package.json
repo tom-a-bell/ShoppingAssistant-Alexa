@@ -1,11 +1,12 @@
 {
-  "name": "alexa-skill-shopping-assistant",
+  "name": "shopping-assistant-alexa-skill",
   "version": "1.0.0",
   "author": "Tom Bell",
   "license": "MIT",
   "private": true,
   "main": "index.js",
   "scripts": {
+    "lint": "eslint --fix .",
     "deploy": "./scripts/deploy.sh"
   },
   "dependencies": {
@@ -14,6 +15,11 @@
     "ask-sdk-core": "^2.0.0",
     "ask-sdk-model": "^1.0.0",
     "aws-sdk": "^2.275.0"
+  },
+  "devDependencies": {
+    "eslint": "^5.4.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.14.0"
   },
   "engines": {
     "node": "^8.10.0"
