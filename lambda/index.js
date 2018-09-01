@@ -18,16 +18,52 @@ const STATUS = {
   COMPLETED: 'completed',
 };
 
+class Message {
+  constructor(message) {
+    this.message = message;
+  }
+
+  entries() {
+    return Object.entries(this.message);
+  }
+}
+
+class Request {
+  constructor(request) {
+    this.type = request.type;
+    this.intent = request.intent;
+    this.message = new Message(request.message);
+  }
+
+  isOfType(requestTypes) {
+    return requestTypes.includes(this.type);
+  }
+
+  isIntentWithName(intentName) {
+    return this.type === 'IntentRequest' && this.intent.name === intentName;
+  }
+}
+
+function requestFor(handlerInput) {
+  return new Request(handlerInput.requestEnvelope.request);
+}
+
+async function asyncForEach(array, callback) {
+  const promises = array.map(callback);
+  await Promise.all(promises);
+}
+
 // handlers
 
 const SkillEventHandler = {
   canHandle(handlerInput) {
-    const { request } = handlerInput.requestEnvelope;
-    return (request.type === 'AlexaSkillEvent.SkillEnabled'
-         || request.type === 'AlexaSkillEvent.SkillDisabled'
-         || request.type === 'AlexaSkillEvent.SkillPermissionAccepted'
-         || request.type === 'AlexaSkillEvent.SkillPermissionChanged'
-         || request.type === 'AlexaSkillEvent.SkillAccountLinked');
+    return requestFor(handlerInput).isOfType([
+      'AlexaSkillEvent.SkillEnabled',
+      'AlexaSkillEvent.SkillDisabled',
+      'AlexaSkillEvent.SkillAccountLinked',
+      'AlexaSkillEvent.SkillPermissionAccepted',
+      'AlexaSkillEvent.SkillPermissionChanged',
+    ]);
   },
   handle(handlerInput) {
     const { userId } = handlerInput.requestEnvelope.context.System.user;
@@ -58,10 +94,11 @@ const SkillEventHandler = {
 
 const ItemEventHandler = {
   canHandle(handlerInput) {
-    const { request } = handlerInput.requestEnvelope;
-    return (request.type === 'AlexaHouseholdListEvent.ItemsCreated'
-         || request.type === 'AlexaHouseholdListEvent.ItemsDeleted'
-         || request.type === 'AlexaHouseholdListEvent.ItemsUpdated');
+    return requestFor(handlerInput).isOfType([
+      'AlexaHouseholdListEvent.ItemsCreated',
+      'AlexaHouseholdListEvent.ItemsUpdated',
+      'AlexaHouseholdListEvent.ItemsDeleted',
+    ]);
   },
   async handle(handlerInput) {
     const { listId, listItemIds } = handlerInput.requestEnvelope.request.body;
@@ -185,10 +222,11 @@ const ItemEventHandler = {
 
 const ListEventHandler = {
   canHandle(handlerInput) {
-    const { request } = handlerInput.requestEnvelope;
-    return (request.type === 'AlexaHouseholdListEvent.ListCreated'
-         || request.type === 'AlexaHouseholdListEvent.ListUpdated'
-         || request.type === 'AlexaHouseholdListEvent.ListDeleted');
+    return requestFor(handlerInput).isOfType([
+      'AlexaHouseholdListEvent.ListCreated',
+      'AlexaHouseholdListEvent.ListUpdated',
+      'AlexaHouseholdListEvent.ListDeleted',
+    ]);
   },
   async handle(handlerInput) {
     const listClient = handlerInput.serviceClientFactory.getListManagementServiceClient();
@@ -213,44 +251,41 @@ const ListEventHandler = {
   },
 };
 
+const updateListItem = async (listServiceClient, [itemId, update]) => {
+  const listId = 'YW16bjEuYWNjb3VudC5BSExKRldaNzRKMzQ0QTZPUFBHUUlTQUxIVEJRLVNIT1BQSU5HX0lURU0=';
+  switch (update.change) {
+    case 'create':
+      console.log('Creating item with properties:', update.value);
+      await listServiceClient.createListItem(listId, JSON.parse(update.value));
+      return;
+    case 'update':
+      console.log('Updating item with properties:', update.value);
+      await listServiceClient.updateListItem(listId, itemId, JSON.parse(update.value));
+      return;
+    case 'delete':
+      console.log('Deleting item with properties:', update.value);
+      await listServiceClient.deleteListItem(listId, itemId);
+      return;
+    default:
+      console.error('Unrecognised change request:', update.change);
+  }
+};
+
 const MessageRequestHandler = {
   canHandle(handlerInput) {
-    const { request } = handlerInput.requestEnvelope;
-    return request.type === 'Messaging.MessageReceived';
+    return requestFor(handlerInput).isOfType(['Messaging.MessageReceived']);
   },
   async handle(handlerInput) {
-    const { message } = handlerInput.requestEnvelope.request;
-
-    const listId = 'YW16bjEuYWNjb3VudC5BSExKRldaNzRKMzQ0QTZPUFBHUUlTQUxIVEJRLVNIT1BQSU5HX0lURU0=';
+    const updatedListItems = requestFor(handlerInput).message.entries();
     const listServiceClient = handlerInput.serviceClientFactory.getListManagementServiceClient();
 
-    for (const [itemId, update] of Object.entries(message)) {
-      if (update.change) {
-        switch (update.change) {
-          case 'create':
-            console.log('Creating item with properties:', update.value);
-            await listServiceClient.createListItem(listId, JSON.parse(update.value));
-            continue;
-          case 'update':
-            console.log('Updating item with properties:', update.value);
-            await listServiceClient.updateListItem(listId, itemId, JSON.parse(update.value));
-            continue;
-          case 'delete':
-            console.log('Deleting item with properties:', update.value);
-            await listServiceClient.deleteListItem(listId, itemId);
-            continue;
-          default:
-            console.error('Unrecognised change request:', update.change);
-        }
-      }
-    }
+    await asyncForEach(updatedListItems, updateListItem(listServiceClient));
   },
 };
 
 const IntentRequestHandler = {
   canHandle(handlerInput) {
-    const { request } = handlerInput.requestEnvelope;
-    return request.type === 'IntentRequest' && request.intent.name === 'HelloWorldIntent';
+    return requestFor(handlerInput).isIntentWithName('HelloWorldIntent');
   },
   handle(handlerInput) {
     return handlerInput.responseBuilder
@@ -262,8 +297,7 @@ const IntentRequestHandler = {
 
 const LaunchRequestHandler = {
   canHandle(handlerInput) {
-    const { request } = handlerInput.requestEnvelope;
-    return request.type === 'LaunchRequest';
+    return requestFor(handlerInput).isOfType(['LaunchRequest']);
   },
   handle(handlerInput) {
     const { responseBuilder } = handlerInput;
@@ -303,8 +337,7 @@ const UnhandledHandler = {
 
 const AmazonHelpHandler = {
   canHandle(handlerInput) {
-    const { request } = handlerInput.requestEnvelope;
-    return request.type === 'IntentRequest' && request.intent.name === 'AMAZON.HelpIntent';
+    return requestFor(handlerInput).isIntentWithName('AMAZON.HelpIntent');
   },
   handle(handlerInput) {
     return handlerInput.responseBuilder
@@ -316,9 +349,8 @@ const AmazonHelpHandler = {
 
 const AmazonCancelStopHandler = {
   canHandle(handlerInput) {
-    const { request } = handlerInput.requestEnvelope;
-    return request.type === 'IntentRequest'
-       && (request.intent.name === 'AMAZON.CancelIntent' || request.intent.name === 'AMAZON.StopIntent');
+    return requestFor(handlerInput).isIntentWithName('AMAZON.CancelIntent')
+        || requestFor(handlerInput).isIntentWithName('AMAZON.StopIntent');
   },
   handle(handlerInput) {
     const speechOutput = 'Okay, talk to you later! ';
@@ -332,8 +364,7 @@ const AmazonCancelStopHandler = {
 
 const SessionEndedHandler = {
   canHandle(handlerInput) {
-    const { request } = handlerInput.requestEnvelope;
-    return request.type === 'SessionEndedRequest';
+    return requestFor(handlerInput).isOfType(['SessionEndedRequest']);
   },
   handle(handlerInput) {
     console.log(`Session ended with reason: ${handlerInput.requestEnvelope.request.reason}`);
