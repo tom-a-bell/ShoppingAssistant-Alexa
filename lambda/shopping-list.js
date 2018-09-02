@@ -1,21 +1,22 @@
 const Cognito = require('./utils/cognito');
 
-const recordForItem = item => JSON.stringify({
+const recordForItem = (item, user) => JSON.stringify({
   id: item.id,
   value: item.value,
   status: item.status,
   version: item.version,
   createdTime: item.createdTime,
   updatedTime: item.updatedTime,
+  userId: user.userId,
 });
 
 const openOrCreateShoppingList = () => Cognito.openOrCreateDataset('ShoppingList');
-const saveItem = (item, dataset) => Cognito.saveItemToDataset(dataset, item.id, recordForItem(item));
+const saveItem = (item, user, dataset) => Cognito.saveItemToDataset(dataset, item.id, recordForItem(item, user));
 const removeItem = (itemId, dataset) => Cognito.removeItemFromDataset(dataset, itemId);
 const synchronizeShoppingList = shoppingList => Cognito.synchronizeDataset(shoppingList);
 
-const saveItems = (items, dataset) => items.reduce(
-  (promiseChain, item) => promiseChain.then(currentDataset => saveItem(item, currentDataset)),
+const saveItems = (items, user, dataset) => items.reduce(
+  (promiseChain, item) => promiseChain.then(currentDataset => saveItem(item, user, currentDataset)),
   Promise.resolve(dataset),
 );
 
@@ -24,18 +25,18 @@ const removeItems = (itemIds, dataset) => itemIds.reduce(
   Promise.resolve(dataset),
 );
 
-const saveItemsToCognitoDataset = (items, accessToken) => {
-  const saveItemsToShoppingList = shoppingList => saveItems(items, shoppingList);
-  return Cognito.getCognitoCredentials(accessToken)
+const saveItemsToCognitoDataset = (items, user) => {
+  const saveItemsToShoppingList = shoppingList => saveItems(items, user, shoppingList);
+  return Cognito.getCognitoCredentials(user.accessToken)
     .then(openOrCreateShoppingList)
     .then(saveItemsToShoppingList)
     .then(synchronizeShoppingList)
     .catch(error => console.error('Failed to save items to Cognito dataset:', error));
 };
 
-const removeItemsFromCognitoDataset = (itemIds, accessToken) => {
+const removeItemsFromCognitoDataset = (itemIds, user) => {
   const removeItemsFromShoppingList = shoppingList => removeItems(itemIds, shoppingList);
-  return Cognito.getCognitoCredentials(accessToken)
+  return Cognito.getCognitoCredentials(user.accessToken)
     .then(openOrCreateShoppingList)
     .then(removeItemsFromShoppingList)
     .then(synchronizeShoppingList)

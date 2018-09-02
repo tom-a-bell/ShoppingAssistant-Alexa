@@ -13,7 +13,7 @@ async function syncShoppingListToCognito(user, serviceClientFactory) {
 
   const listServiceClient = serviceClientFactory.getListManagementServiceClient();
   const list = await listServiceClient.getList(SHOPPING_LIST_ID, Status.ACTIVE);
-  await ShoppingList.saveItemsToCognitoDataset(list.items, user.accessToken);
+  await ShoppingList.saveItemsToCognitoDataset(list.items, user);
 }
 
 const SkillEventHandler = {

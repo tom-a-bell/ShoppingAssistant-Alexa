@@ -31,17 +31,17 @@ const ItemEventHandler = {
         listItems = await Promise.all(listItemIds.map(itemId => listServiceClient.getListItem(listId, itemId)));
         itemNames = listItems.map(item => `"${item.value}"`).join(', ');
         console.log(`New item ${itemNames} added to your ${list.name}`);
-        await ShoppingList.saveItemsToCognitoDataset(listItems, user.accessToken);
+        await ShoppingList.saveItemsToCognitoDataset(listItems, user);
         break;
       case 'AlexaHouseholdListEvent.ItemsUpdated':
         listItems = await Promise.all(listItemIds.map(itemId => listServiceClient.getListItem(listId, itemId)));
         itemNames = listItems.map(item => `"${item.value}"`).join(', ');
         console.log(`Existing item ${itemNames} updated on your ${list.name}`);
-        await ShoppingList.saveItemsToCognitoDataset(listItems, user.accessToken);
+        await ShoppingList.saveItemsToCognitoDataset(listItems, user);
         break;
       case 'AlexaHouseholdListEvent.ItemsDeleted':
         console.log(`Item with ID ${listItemIds.join(', ')} deleted from your ${list.name}`);
-        await ShoppingList.removeItemsFromCognitoDataset(listItemIds, user.accessToken);
+        await ShoppingList.removeItemsFromCognitoDataset(listItemIds, user);
         break;
       default:
         console.error('Unexpected request type:', request.type);
