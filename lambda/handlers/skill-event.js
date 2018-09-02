@@ -1,8 +1,8 @@
+const { SHOPPING_LIST_ID } = require('../constants/constants');
 const Status = require('../constants/list-status');
+
 const ShoppingList = require('../shopping-list');
 const { requestFor, userFor } = require('../utils/util');
-
-const SHOPPING_LIST_ID = 'YW16bjEuYWNjb3VudC5BSExKRldaNzRKMzQ0QTZPUFBHUUlTQUxIVEJRLVNIT1BQSU5HX0lURU0=';
 
 async function syncShoppingListToCognito(user, serviceClientFactory) {
   if (!user.isFullyEnabled()) {

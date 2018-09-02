@@ -1,21 +1,20 @@
+const { SHOPPING_LIST_ID } = require('../constants/constants');
 const { asyncForEach, requestFor } = require('../utils/util');
-
-const listId = 'YW16bjEuYWNjb3VudC5BSExKRldaNzRKMzQ0QTZPUFBHUUlTQUxIVEJRLVNIT1BQSU5HX0lURU0=';
 
 async function updateListItem(listServiceClient, itemId, update) {
   switch (update.change) {
     case 'create':
       console.log('Creating item with properties:', update.value);
-      await listServiceClient.createListItem(listId, JSON.parse(update.value));
-      return;
+      await listServiceClient.createListItem(SHOPPING_LIST_ID, JSON.parse(update.value));
+      break;
     case 'update':
       console.log('Updating item with properties:', update.value);
-      await listServiceClient.updateListItem(listId, itemId, JSON.parse(update.value));
-      return;
+      await listServiceClient.updateListItem(SHOPPING_LIST_ID, itemId, JSON.parse(update.value));
+      break;
     case 'delete':
       console.log('Deleting item with properties:', update.value);
-      await listServiceClient.deleteListItem(listId, itemId);
-      return;
+      await listServiceClient.deleteListItem(SHOPPING_LIST_ID, itemId);
+      break;
     default:
       console.error('Unrecognised change request:', update.change);
   }
