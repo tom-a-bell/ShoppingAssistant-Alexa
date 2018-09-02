@@ -10,24 +10,26 @@ const ListEventHandler = {
     ]);
   },
   async handle(handlerInput) {
-    const listClient = handlerInput.serviceClientFactory.getListManagementServiceClient();
-    const { listId } = handlerInput.requestEnvelope.request.body;
-    const status = Status.ACTIVE;
+    const request = requestFor(handlerInput);
+    const { listId } = request.body;
 
-    if (handlerInput.requestEnvelope.request.type === 'AlexaHouseholdListEvent.ListDeleted') {
-      console.log(`list ${listId} was deleted`);
-    } else {
-      const list = await listClient.getList(listId, status);
-      switch (handlerInput.requestEnvelope.request.type) {
-        case 'AlexaHouseholdListEvent.ListCreated':
-          console.log(`list ${list.name} was created`);
-          break;
-        case 'AlexaHouseholdListEvent.ListUpdated':
-          console.log(`list ${list.name} was updated`);
-          break;
-        default:
-          console.log(`unexpected request type ${handlerInput.requestEnvelope.request.type}`);
-      }
+    const listServiceClient = handlerInput.serviceClientFactory.getListManagementServiceClient();
+
+    let list;
+    switch (request.type) {
+      case 'AlexaHouseholdListEvent.ListCreated':
+        list = await listServiceClient.getList(listId, Status.ACTIVE);
+        console.log(`List "${list.name}" was created`);
+        break;
+      case 'AlexaHouseholdListEvent.ListUpdated':
+        list = await listServiceClient.getList(listId, Status.ACTIVE);
+        console.log(`List "${list.name}" was updated`);
+        break;
+      case 'AlexaHouseholdListEvent.ListDeleted':
+        console.log(`List with ID ${listId} was deleted`);
+        break;
+      default:
+        console.error('Unexpected request type:', request.type);
     }
   },
 };
