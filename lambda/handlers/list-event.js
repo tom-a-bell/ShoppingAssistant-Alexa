@@ -1,10 +1,5 @@
+const Status = require('../constants/list-status');
 const { requestFor } = require('../utils/util');
-
-// Status of list, either active or completed
-const STATUS = {
-  ACTIVE: 'active',
-  COMPLETED: 'completed',
-};
 
 const ListEventHandler = {
   canHandle(handlerInput) {
@@ -17,7 +12,7 @@ const ListEventHandler = {
   async handle(handlerInput) {
     const listClient = handlerInput.serviceClientFactory.getListManagementServiceClient();
     const { listId } = handlerInput.requestEnvelope.request.body;
-    const status = STATUS.ACTIVE;
+    const status = Status.ACTIVE;
 
     if (handlerInput.requestEnvelope.request.type === 'AlexaHouseholdListEvent.ListDeleted') {
       console.log(`list ${listId} was deleted`);

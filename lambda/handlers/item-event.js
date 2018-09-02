@@ -1,11 +1,6 @@
+const Status = require('../constants/list-status');
 const ShoppingList = require('../shopping-list');
 const { requestFor } = require('../utils/util');
-
-// Status of list, either active or completed
-const STATUS = {
-  ACTIVE: 'active',
-  COMPLETED: 'completed',
-};
 
 const ItemEventHandler = {
   canHandle(handlerInput) {
@@ -31,7 +26,7 @@ const ItemEventHandler = {
 
     // Fetch the full list of active items
     const listServiceClient = handlerInput.serviceClientFactory.getListManagementServiceClient();
-    const list = await listServiceClient.getList(listId, STATUS.ACTIVE);
+    const list = await listServiceClient.getList(listId, Status.ACTIVE);
 
     let listItems;
     let itemNames;

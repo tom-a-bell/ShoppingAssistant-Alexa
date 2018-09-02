@@ -1,11 +1,6 @@
+const Status = require('../constants/list-status');
 const ShoppingList = require('../shopping-list');
 const { requestFor, userFor } = require('../utils/util');
-
-// Status of list, either active or completed
-const STATUS = {
-  ACTIVE: 'active',
-  COMPLETED: 'completed',
-};
 
 const SHOPPING_LIST_ID = 'YW16bjEuYWNjb3VudC5BSExKRldaNzRKMzQ0QTZPUFBHUUlTQUxIVEJRLVNIT1BQSU5HX0lURU0=';
 
@@ -17,7 +12,7 @@ async function syncShoppingListToCognito(user, serviceClientFactory) {
   }
 
   const listServiceClient = serviceClientFactory.getListManagementServiceClient();
-  const list = await listServiceClient.getList(SHOPPING_LIST_ID, STATUS.ACTIVE);
+  const list = await listServiceClient.getList(SHOPPING_LIST_ID, Status.ACTIVE);
   await ShoppingList.saveItemsToCognitoDataset(list.items, user.accessToken);
 }
 
