@@ -18,7 +18,6 @@ const ItemEventHandler = {
   async handle(handlerInput) {
     const request = requestFor(handlerInput);
     const { listId, listItemIds } = request.body;
-    console.log('Item was created, updated or deleted');
 
     const { consentToken } = handlerInput.requestEnvelope.context.System.user.permissions;
     if (!consentToken) {
@@ -39,18 +38,18 @@ const ItemEventHandler = {
     switch (request.type) {
       case 'AlexaHouseholdListEvent.ItemsCreated':
         listItems = await Promise.all(listItemIds.map(itemId => listServiceClient.getListItem(listId, itemId)));
-        itemNames = listItems.map(item => item.value).join(', ');
-        console.log(`"${itemNames}" was added to your ${list.name}`);
+        itemNames = listItems.map(item => `"${item.value}"`).join(', ');
+        console.log(`New item ${itemNames} added to your ${list.name}`);
         await ShoppingList.saveItemsToCognitoDataset(listItems, accessToken);
         break;
       case 'AlexaHouseholdListEvent.ItemsUpdated':
         listItems = await Promise.all(listItemIds.map(itemId => listServiceClient.getListItem(listId, itemId)));
-        itemNames = listItems.map(item => item.value).join(', ');
-        console.log(`"${itemNames}" was updated on your ${list.name}`);
+        itemNames = listItems.map(item => `"${item.value}"`).join(', ');
+        console.log(`Existing item ${itemNames} updated on your ${list.name}`);
         await ShoppingList.saveItemsToCognitoDataset(listItems, accessToken);
         break;
       case 'AlexaHouseholdListEvent.ItemsDeleted':
-        console.log(`"${listItemIds}" was deleted from your ${list.name}`);
+        console.log(`Item with ID ${listItemIds.join(', ')} deleted from your ${list.name}`);
         await ShoppingList.removeItemsFromCognitoDataset(listItemIds, accessToken);
         break;
       default:
