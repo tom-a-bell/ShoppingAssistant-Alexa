@@ -3,8 +3,7 @@ const UnknownRequestHandler = {
     return true;
   },
   handle(handlerInput) {
-    console.log('Unhandled request');
-    console.log(handlerInput.requestEnvelope.request);
+    console.error('Unhandled request:', JSON.stringify(handlerInput.requestEnvelope.request, null, 2));
   },
 };
 
