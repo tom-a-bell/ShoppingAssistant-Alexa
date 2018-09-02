@@ -9,21 +9,15 @@ const recordForItem = (item, user) => JSON.stringify({
   updatedTime: item.updatedTime,
   userId: user.userId,
 });
+const buildRecordsForItems = (items, user) => items.reduce(
+  (records, item) => ({ ...records, [item.id]: recordForItem(item, user) }),
+  {},
+);
 
 const openOrCreateShoppingList = () => Cognito.openOrCreateDataset('ShoppingList');
-const saveItem = (item, user, dataset) => Cognito.saveItemToDataset(dataset, item.id, recordForItem(item, user));
-const removeItem = (itemId, dataset) => Cognito.removeItemFromDataset(dataset, itemId);
+const saveItems = (items, user, dataset) => Cognito.saveItemsToDataset(dataset, buildRecordsForItems(items, user));
+const removeItems = (itemIds, dataset) => Cognito.removeItemsFromDataset(dataset, itemIds);
 const synchronizeShoppingList = shoppingList => Cognito.synchronizeDataset(shoppingList);
-
-const saveItems = (items, user, dataset) => items.reduce(
-  (promiseChain, item) => promiseChain.then(currentDataset => saveItem(item, user, currentDataset)),
-  Promise.resolve(dataset),
-);
-
-const removeItems = (itemIds, dataset) => itemIds.reduce(
-  (promiseChain, itemId) => promiseChain.then(currentDataset => removeItem(itemId, currentDataset)),
-  Promise.resolve(dataset),
-);
 
 const saveItemsToCognitoDataset = (items, user) => {
   const saveItemsToShoppingList = shoppingList => saveItems(items, user, shoppingList);

@@ -1,9 +1,9 @@
 const AWS = require('aws-sdk');
 require('amazon-cognito-js');
 
-const cognitoSyncManager = () => new AWS.CognitoSyncManager({ DataStore: AWS.CognitoSyncManager.StoreInMemory });
-
 const { onConflict, onDatasetDeleted, onDatasetsMerged } = require('./sync-handlers');
+
+const cognitoSyncManager = () => new AWS.CognitoSyncManager({ DataStore: AWS.CognitoSyncManager.StoreInMemory });
 
 const getCognitoCredentials = (accessToken) => {
   // Initialize the Amazon Cognito credentials provider
@@ -27,6 +27,17 @@ const openOrCreateDataset = datasetName => new Promise((resolve, reject) => {
   });
 });
 
+const saveItemsToDataset = (dataset, items) => new Promise((resolve, reject) => {
+  dataset.putAll(items, (error) => {
+    if (error) {
+      console.error(`Failed to save items to dataset: ${items}`, error);
+      return reject(error);
+    }
+    console.log('Saved items to dataset:', items);
+    return resolve(dataset);
+  });
+});
+
 const saveItemToDataset = (dataset, itemId, item) => new Promise((resolve, reject) => {
   dataset.put(itemId, item, (error, record) => {
     if (error) {
@@ -37,6 +48,12 @@ const saveItemToDataset = (dataset, itemId, item) => new Promise((resolve, rejec
     return resolve(dataset);
   });
 });
+
+const removeItemsFromDataset = (dataset, itemIds) => {
+  // Save null values for the specified item IDs, causing them to be removed upon synchronization.
+  const removedItems = itemIds.reduce((records, itemId) => ({ ...records, [itemId]: null }), {});
+  return saveItemsToDataset(dataset, removedItems);
+};
 
 const removeItemFromDataset = (dataset, itemId) => new Promise((resolve, reject) => {
   dataset.remove(itemId, (error, record) => {
@@ -68,7 +85,9 @@ const synchronizeDataset = dataset => new Promise((resolve, reject) => {
 module.exports = {
   getCognitoCredentials,
   openOrCreateDataset,
+  saveItemsToDataset,
   saveItemToDataset,
+  removeItemsFromDataset,
   removeItemFromDataset,
   synchronizeDataset,
 };
