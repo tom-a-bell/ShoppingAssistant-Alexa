@@ -1,4 +1,25 @@
-const { requestFor } = require('../utils/util');
+const ShoppingList = require('../shopping-list');
+const { requestFor, userFor } = require('../utils/util');
+
+// Status of list, either active or completed
+const STATUS = {
+  ACTIVE: 'active',
+  COMPLETED: 'completed',
+};
+
+const SHOPPING_LIST_ID = 'YW16bjEuYWNjb3VudC5BSExKRldaNzRKMzQ0QTZPUFBHUUlTQUxIVEJRLVNIT1BQSU5HX0lURU0=';
+
+async function syncShoppingListToCognito(user, serviceClientFactory) {
+  if (!user.isFullyEnabled()) {
+    const reason = !user.accessToken ? 'accessToken for linked account not specified' : 'consentToken not specified';
+    console.error('Failed to synchronize shopping list to Cognito:', reason);
+    return;
+  }
+
+  const listServiceClient = serviceClientFactory.getListManagementServiceClient();
+  const list = await listServiceClient.getList(SHOPPING_LIST_ID, STATUS.ACTIVE);
+  await ShoppingList.saveItemsToCognitoDataset(list.items, user.accessToken);
+}
 
 const SkillEventHandler = {
   canHandle(handlerInput) {
@@ -10,31 +31,33 @@ const SkillEventHandler = {
       'AlexaSkillEvent.SkillPermissionChanged',
     ]);
   },
-  handle(handlerInput) {
-    const { userId } = handlerInput.requestEnvelope.context.System.user;
+  async handle(handlerInput) {
     const request = requestFor(handlerInput);
-    let acceptedPermissions;
+    const user = userFor(handlerInput);
 
+    let acceptedPermissions;
     switch (request.type) {
       case 'AlexaSkillEvent.SkillEnabled':
-        console.log(`Skill was enabled for user: ${userId}`);
+        console.log('Skill was enabled for user:', user.userId);
         break;
       case 'AlexaSkillEvent.SkillDisabled':
-        console.log(`Skill was disabled for user: ${userId}`);
+        console.log('Skill was disabled for user:', user.userId);
         break;
       case 'AlexaSkillEvent.SkillPermissionAccepted':
         acceptedPermissions = JSON.stringify(request.body.acceptedPermissions);
-        console.log(`Skill permissions were accepted for user ${userId}. New permissions: ${acceptedPermissions}`);
+        console.log(`Skill permissions were accepted for user ${user.userId}. New permissions: ${acceptedPermissions}`);
+        await syncShoppingListToCognito(user, handlerInput.serviceClientFactory);
         break;
       case 'AlexaSkillEvent.SkillPermissionChanged':
         acceptedPermissions = JSON.stringify(request.body.acceptedPermissions);
-        console.log(`Skill permissions were changed for user ${userId}. New permissions: ${acceptedPermissions}`);
+        console.log(`Skill permissions were changed for user ${user.userId}. New permissions: ${acceptedPermissions}`);
         break;
       case 'AlexaSkillEvent.SkillAccountLinked':
-        console.log(`Skill account was linked for user ${userId}`);
+        console.log('Skill account was linked for user:', user.userId);
+        await syncShoppingListToCognito(user, handlerInput.serviceClientFactory);
         break;
       default:
-        console.log(`Unexpected request type: ${request.type}`);
+        console.error('Unexpected request type:', request.type);
     }
   },
 };
