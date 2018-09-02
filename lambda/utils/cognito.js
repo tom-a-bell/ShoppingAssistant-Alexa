@@ -3,28 +3,7 @@ require('amazon-cognito-js');
 
 const cognitoSyncManager = () => new AWS.CognitoSyncManager({ DataStore: AWS.CognitoSyncManager.StoreInMemory });
 
-const onConflict = (dataset, conflicts, callback) => {
-  console.error('Conflict(s) encountered while syncing to remote store:', JSON.stringify(conflicts, null, 2));
-
-  // Abandon the synchronization process.
-  return callback(false);
-};
-
-const onDatasetDeleted = (dataset, datasetName, callback) => {
-  console.log('Dataset deleted in remote store:', datasetName);
-
-  // Return true to delete the local copy of the dataset.
-  // Return false to handle deleted datasets outside of the synchronization callback.
-  return callback(true);
-};
-
-const onDatasetsMerged = (dataset, datasetNames, callback) => {
-  console.log('Datasets merged in remote store:', datasetNames);
-
-  // Return true to continue the synchronization process.
-  // Return false to handle dataset merges outside of the synchronization callback.
-  return callback(false);
-};
+const { onConflict, onDatasetDeleted, onDatasetsMerged } = require('./sync-handlers');
 
 const getCognitoCredentials = (accessToken) => {
   // Initialize the Amazon Cognito credentials provider
