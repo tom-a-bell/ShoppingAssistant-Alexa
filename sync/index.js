@@ -1,6 +1,16 @@
 const axios = require('axios');
 const querystring = require('querystring');
 
+function getUserId(records) {
+  const getUserIds = record => JSON.parse(record.value).userId;
+  const isNotNull = value => !!value;
+
+  return Object
+    .values(records)
+    .map(getUserIds)
+    .find(isNotNull);
+}
+
 async function getAccessToken() {
   const url = 'https://api.amazon.com/auth/O2/token';
   const data = {
@@ -19,14 +29,19 @@ async function getAccessToken() {
   }
 }
 
-async function sendMessageToAlexa(records, accessToken) {
+async function sendMessageToAlexa(userId, records, accessToken) {
+  if (!userId) {
+    console.error('User ID not specified');
+    return;
+  }
+
   if (!accessToken) {
     console.error('Access token not specified');
     return;
   }
 
-  const userId = process.env.ALEXA_SKILL_USER_ID;
-  const url = `https://api.amazonalexa.com/v1/skillmessages/users/${userId}`;
+  const apiEndpoint = process.env.ALEXA_SKILL_MESSAGING_ENDPOINT;
+  const url = `${apiEndpoint}/${userId}`;
   const data = {
     data: records,
     expiresAfterSeconds: 60,
@@ -43,8 +58,9 @@ async function sendMessageToAlexa(records, accessToken) {
 }
 
 const sendMessageToAlexaSkill = async (records) => {
+  const userId = getUserId(records);
   const accessToken = await getAccessToken();
-  await sendMessageToAlexa(records, accessToken);
+  await sendMessageToAlexa(userId, records, accessToken);
 };
 
 exports.handler = async (event) => {
